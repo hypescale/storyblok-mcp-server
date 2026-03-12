@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 
 // Load environment variables from .env file
-config();
+config({ quiet: true });
 
 /**
  * Custom exception for configuration errors in Storyblok MCP
