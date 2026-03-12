@@ -5,6 +5,10 @@
 [![MCP](https://img.shields.io/badge/MCP-compatible-blue)](https://modelcontextprotocol.io/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6)](https://www.typescriptlang.org/)
 
+<a href="https://glama.ai/mcp/servers/martinkogut/storyblok-mcp-server">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/martinkogut/storyblok-mcp-server/badge" />
+</a>
+
 A TypeScript [Model Context Protocol](https://modelcontextprotocol.io/) server for the Storyblok Management API. It lets AI assistants and agents manage Storyblok content, workflows, and configuration safely and programmatically.
 
 ## Why this project
