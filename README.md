@@ -66,6 +66,10 @@ Then start the server:
 npm run start
 ```
 
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/hypescale-storyblok-mcp-server).
+
 ## Requirements
 
 - Node.js >= 20
