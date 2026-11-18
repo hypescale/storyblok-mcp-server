@@ -4,16 +4,8 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { getManagementHeaders, handleResponse, APIError } from '../utils/api.js';
+import { apiRequest, buildRootUrl, APIError } from '../utils/api.js';
 import { createErrorResponse, createJsonResponse } from '../utils/response.js';
-import { API_ENDPOINTS } from '../config.js';
-
-/**
- * Build URL for space-level API calls (without space ID in path)
- */
-function buildSpaceUrl(path: string): string {
-  return `${API_ENDPOINTS.MANAGEMENT}${path}`;
-}
 
 export function registerSpace(server: McpServer): void {
   // Tool: fetch_spaces
@@ -23,12 +15,7 @@ export function registerSpace(server: McpServer): void {
     {},
     async () => {
       try {
-        const url = buildSpaceUrl('/spaces/');
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: getManagementHeaders(),
-        });
-        const data = await handleResponse(response, url);
+        const data = await apiRequest('GET', buildRootUrl('/spaces/'));
         return createJsonResponse(data);
       } catch (error) {
         if (error instanceof APIError) {
@@ -48,12 +35,7 @@ export function registerSpace(server: McpServer): void {
     },
     async ({ space_id }) => {
       try {
-        const url = buildSpaceUrl(`/spaces/${space_id}`);
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: getManagementHeaders(),
-        });
-        const data = await handleResponse(response, url);
+        const data = await apiRequest('GET', buildRootUrl(`/spaces/${space_id}`));
         return createJsonResponse(data);
       } catch (error) {
         if (error instanceof APIError) {
@@ -91,13 +73,7 @@ export function registerSpace(server: McpServer): void {
         }
 
         const payload = { space: spaceData };
-        const url = buildSpaceUrl('/spaces/');
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: getManagementHeaders(),
-          body: JSON.stringify(payload),
-        });
-        const data = await handleResponse(response, url);
+        const data = await apiRequest('POST', buildRootUrl('/spaces/'), { body: payload });
         return createJsonResponse(data);
       } catch (error) {
         if (error instanceof APIError) {
@@ -170,13 +146,7 @@ export function registerSpace(server: McpServer): void {
         if (options !== undefined) spaceData.options = options;
 
         const payload = { space: spaceData };
-        const url = buildSpaceUrl(`/spaces/${space_id}`);
-        const response = await fetch(url, {
-          method: 'PUT',
-          headers: getManagementHeaders(),
-          body: JSON.stringify(payload),
-        });
-        const data = await handleResponse(response, url);
+        const data = await apiRequest('PUT', buildRootUrl(`/spaces/${space_id}`), { body: payload });
         return createJsonResponse(data);
       } catch (error) {
         if (error instanceof APIError) {
@@ -225,13 +195,7 @@ export function registerSpace(server: McpServer): void {
           },
         };
 
-        const url = buildSpaceUrl('/spaces/');
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: getManagementHeaders(),
-          body: JSON.stringify(payload),
-        });
-        const data = await handleResponse(response, url);
+        const data = await apiRequest('POST', buildRootUrl('/spaces/'), { body: payload });
         return createJsonResponse(data);
       } catch (error) {
         if (error instanceof APIError) {
@@ -251,13 +215,7 @@ export function registerSpace(server: McpServer): void {
     },
     async ({ space_id }) => {
       try {
-        const url = buildSpaceUrl(`/spaces/${space_id}/backups`);
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: getManagementHeaders(),
-          body: JSON.stringify({}),
-        });
-        const data = await handleResponse(response, url);
+        const data = await apiRequest('POST', buildRootUrl(`/spaces/${space_id}/backups`), { body: {} });
         return createJsonResponse(data);
       } catch (error) {
         if (error instanceof APIError) {
@@ -277,27 +235,8 @@ export function registerSpace(server: McpServer): void {
     },
     async ({ space_id }) => {
       try {
-        const url = buildSpaceUrl(`/spaces/${space_id}`);
-        const response = await fetch(url, {
-          method: 'DELETE',
-          headers: getManagementHeaders(),
-        });
-
-        if (response.status === 204) {
-          return {
-            content: [{ type: 'text' as const, text: 'Space deleted successfully.' }],
-          };
-        } else {
-          return {
-            isError: true,
-            content: [
-              {
-                type: 'text' as const,
-                text: `Failed to delete space. Status code: ${response.status}`,
-              },
-            ],
-          };
-        }
+        await apiRequest('DELETE', buildRootUrl(`/spaces/${space_id}`));
+        return createJsonResponse({ message: 'Space deleted successfully.' });
       } catch (error) {
         if (error instanceof APIError) {
           return createErrorResponse(error);

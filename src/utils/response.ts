@@ -3,6 +3,7 @@
  */
 
 import type { McpTextContent, McpSuccessResponse, McpErrorResponse } from '../types/api.js';
+import { APIError } from './api.js';
 
 /**
  * Create a success response with text content
@@ -38,7 +39,10 @@ export function createErrorResponse(
   error: unknown,
   errorCode?: string
 ): McpErrorResponse {
-  const message = error instanceof Error ? error.message : String(error);
+  let message = error instanceof Error ? error.message : String(error);
+  if (error instanceof APIError) {
+    message += `\nSuggested fix: ${error.context.suggestedFix}`;
+  }
   const response: McpErrorResponse = {
     isError: true,
     content: [{ type: 'text', text: message }],

@@ -7,12 +7,14 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import {
   apiGet,
+  apiGetPaginated,
   apiPost,
   apiPut,
   apiDelete,
+  apiRequest,
+  addOptionalParams,
   buildManagementUrl,
-  getManagementHeaders,
-  handleResponse,
+  buildRootUrl,
   APIError,
 } from '../utils/api.js';
 import { createErrorResponse, createJsonResponse } from '../utils/response.js';
@@ -25,7 +27,7 @@ export function registerStories(server: McpServer): void {
     'Fetch multiple stories from Storyblok with advanced filtering and pagination.',
     {
       page: z.number().optional().default(1).describe('Page number'),
-      per_page: z.number().optional().default(25).describe('Number of stories per page'),
+      per_page: z.number().optional().default(25).describe('Number of stories per page (max 100)'),
       contain_component: z.string().optional().describe('Filter by component name'),
       text_search: z.string().optional().describe('Full-text search'),
       sort_by: z.string().optional().describe('Sort field (e.g., "created_at:desc")'),
@@ -88,9 +90,10 @@ export function registerStories(server: McpServer): void {
       reference_search,
     }) => {
       try {
+        const effectivePerPage = Math.min(per_page, 100);
         const params: Record<string, string> = {
           page: String(page),
-          per_page: String(per_page),
+          per_page: String(effectivePerPage),
         };
 
         // Add optional parameters
@@ -125,26 +128,22 @@ export function registerStories(server: McpServer): void {
           reference_search,
         };
 
-        for (const [key, val] of Object.entries(optionalParams)) {
-          if (val === null || val === undefined) {
-            continue;
-          }
-          if (typeof val === 'boolean') {
-            params[key] = val ? '1' : '0';
-          } else if (typeof val === 'object') {
-            params[key] = JSON.stringify(val);
-          } else {
-            params[key] = String(val);
-          }
-        }
+        addOptionalParams(params, optionalParams);
 
-        const data = await apiGet<{ stories: Array<Record<string, unknown>> }>('/stories', params);
+        const { data, total } = await apiGetPaginated<{ stories: Array<Record<string, unknown>> }>(
+          '/stories',
+          params
+        );
+        const stories = data.stories || [];
 
         return createJsonResponse({
-          stories: data.stories || [],
-          total: (data.stories || []).length,
+          stories,
+          count: stories.length,
+          // `Total` header = number of matching stories across all pages
+          total,
           page,
-          per_page,
+          per_page: effectivePerPage,
+          has_more: total !== null ? page * effectivePerPage < total : stories.length === effectivePerPage,
         });
       } catch (error) {
         if (error instanceof APIError) {
@@ -313,10 +312,6 @@ export function registerStories(server: McpServer): void {
       lang,
     }) => {
       try {
-        if (!name && !slug && !content && !publish) {
-          return createErrorResponse('No update fields or publish flag provided.');
-        }
-
         const payloadStory: Record<string, unknown> = {};
 
         const allFields: Record<string, unknown> = {
@@ -345,6 +340,10 @@ export function registerStories(server: McpServer): void {
           if (val !== undefined && val !== null) {
             payloadStory[key] = val;
           }
+        }
+
+        if (Object.keys(payloadStory).length === 0 && !publish) {
+          return createErrorResponse('No update fields or publish flag provided.');
         }
 
         if (force_update) {
@@ -558,9 +557,12 @@ export function registerStories(server: McpServer): void {
           }
         }
 
-        // Check for extraneous fields
+        // Check for extraneous fields. Storyblok adds system keys to every
+        // blok (component name, unique id, visual-editor marker) that are never
+        // part of a component schema, so they must not be reported.
+        const SYSTEM_KEYS = new Set(['component', '_uid', '_editable']);
         for (const field of Object.keys(content)) {
-          if (!(field in schema)) {
+          if (!SYSTEM_KEYS.has(field) && !(field in schema)) {
             extraneous.push(field);
             errors.push({
               field,
@@ -616,20 +618,11 @@ export function registerStories(server: McpServer): void {
         };
 
         try {
-          const url = buildManagementUrl(`/stories/${story_id}`);
-          const searchParams = new URLSearchParams(params);
-          const fullUrl = searchParams.toString() ? `${url}?${searchParams.toString()}` : url;
-
-          const response = await fetch(fullUrl, {
-            method: 'GET',
-            headers: getManagementHeaders(),
-          });
-
-          const data = await handleResponse<{ story: Record<string, unknown> }>(response, fullUrl);
+          const data = await apiGet<{ story: Record<string, unknown> }>(`/stories/${story_id}`, params);
           const story = data.story || {};
           const contentPresent = Boolean(story.content);
 
-          attempt.status = response.status;
+          attempt.status = 200;
           attempt.responseData = {
             id: story.id,
             name: story.name,
@@ -730,7 +723,8 @@ export function registerStories(server: McpServer): void {
 
       for (const sid of story_ids) {
         try {
-          const data = await apiPost(`/stories/${sid}/publish`, {});
+          // Storyblok's publish endpoint is a GET request.
+          const data = await apiGet(`/stories/${sid}/publish`);
           results.push({ id: sid, status: 'success', data });
           success++;
         } catch (error) {
@@ -817,19 +811,15 @@ export function registerStories(server: McpServer): void {
         const { id, publish, ...updateFields } = storyUpdate;
 
         try {
-          const data = await apiPut(`/stories/${sid}`, { story: updateFields });
-          let published = false;
-
+          // Publishing in the same PUT (publish: 1) avoids a second request
+          // and keeps update + publish atomic from Storyblok's point of view.
+          const payload: Record<string, unknown> = { story: updateFields };
           if (shouldPublish) {
-            try {
-              await apiPost(`/stories/${sid}/publish`, {});
-              published = true;
-            } catch {
-              // Publishing errors don't block update success
-            }
+            payload.publish = 1;
           }
+          const data = await apiPut(`/stories/${sid}`, payload);
 
-          results.push({ id: sid, status: 'success', data, published });
+          results.push({ id: sid, status: 'success', data, published: Boolean(shouldPublish) });
           success++;
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
@@ -937,7 +927,7 @@ export function registerStories(server: McpServer): void {
     'ai_translate_story',
     "Translates a story's content into a specified language using AI.",
     {
-      space_id: z.number().describe('Space ID'),
+      space_id: z.number().optional().describe('Space ID (defaults to the configured STORYBLOK_SPACE_ID)'),
       story_id: z.number().describe('Story ID to translate'),
       lang: z.string().describe('Target language name'),
       code: z.string().describe('Target language code'),
@@ -955,19 +945,13 @@ export function registerStories(server: McpServer): void {
           payload.release_id = release_id;
         }
 
-        // This endpoint uses a different URL structure with space_id in the path
-        const url = buildManagementUrl(`/stories/${story_id}/ai_translate`).replace(
-          `/spaces/${space_id}/`,
-          `/spaces/${space_id}/`
-        );
+        // Honor an explicit space_id; fall back to the configured space.
+        const url =
+          space_id !== undefined
+            ? buildRootUrl(`/spaces/${space_id}/stories/${story_id}/ai_translate`)
+            : buildManagementUrl(`/stories/${story_id}/ai_translate`);
 
-        const response = await fetch(url, {
-          method: 'PUT',
-          headers: getManagementHeaders(),
-          body: JSON.stringify(payload),
-        });
-
-        const data = await handleResponse(response, url);
+        const data = await apiRequest('PUT', url, { body: payload });
         return createJsonResponse(data);
       } catch (error) {
         if (error instanceof APIError) {

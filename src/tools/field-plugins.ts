@@ -5,18 +5,18 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import {
-  getManagementHeaders,
-  handleResponse,
   buildUrlWithParams,
   APIError,
+  apiRequest,
+  buildRootUrl,
 } from '../utils/api.js';
 import { createErrorResponse, createJsonResponse } from '../utils/response.js';
 
 // Base URLs for field plugins by context
 const FIELD_PLUGIN_URLS: Record<string, string> = {
-  space: 'https://mapi.storyblok.com/v1/field_types',
-  org: 'https://mapi.storyblok.com/v1/org_field_types',
-  partner: 'https://mapi.storyblok.com/v1/partner_field_types',
+  space: buildRootUrl('/field_types'),
+  org: buildRootUrl('/org_field_types'),
+  partner: buildRootUrl('/partner_field_types'),
 };
 
 export function registerFieldPlugins(server: McpServer): void {
@@ -57,11 +57,7 @@ Args:
         }
 
         const url = buildUrlWithParams(baseUrl, params);
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: getManagementHeaders(),
-        });
-        const data = await handleResponse(response, url);
+        const data = await apiRequest('GET', url);
         return createJsonResponse(data);
       } catch (error) {
         if (error instanceof APIError) {
@@ -87,11 +83,7 @@ Args:
     async ({ field_type_id, context }) => {
       try {
         const url = `${FIELD_PLUGIN_URLS[context]}/${field_type_id}`;
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: getManagementHeaders(),
-        });
-        const data = await handleResponse(response, url);
+        const data = await apiRequest('GET', url);
         return createJsonResponse(data);
       } catch (error) {
         if (error instanceof APIError) {
@@ -130,12 +122,7 @@ Args:
           },
         };
 
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: getManagementHeaders(),
-          body: JSON.stringify(payload),
-        });
-        const data = await handleResponse(response, url);
+        const data = await apiRequest('POST', url, { body: payload });
         return createJsonResponse(data);
       } catch (error) {
         if (error instanceof APIError) {
@@ -191,12 +178,7 @@ Args:
 
         const payload = { field_type: fieldTypeData };
 
-        const response = await fetch(url, {
-          method: 'PUT',
-          headers: getManagementHeaders(),
-          body: JSON.stringify(payload),
-        });
-        const data = await handleResponse(response, url);
+        const data = await apiRequest('PUT', url, { body: payload });
         return createJsonResponse(data);
       } catch (error) {
         if (error instanceof APIError) {
@@ -219,27 +201,9 @@ Args:
     },
     async ({ field_type_id }) => {
       try {
-        const url = `https://mapi.storyblok.com/v1/field_types/${field_type_id}`;
-        const response = await fetch(url, {
-          method: 'DELETE',
-          headers: getManagementHeaders(),
-        });
-
-        if (response.status === 204) {
-          return {
-            content: [{ type: 'text' as const, text: 'Field plugin deleted successfully.' }],
-          };
-        } else {
-          return {
-            isError: true,
-            content: [
-              {
-                type: 'text' as const,
-                text: `Failed to delete field plugin. Status code: ${response.status}`,
-              },
-            ],
-          };
-        }
+        const url = buildRootUrl(`/field_types/${field_type_id}`);
+        await apiRequest('DELETE', url);
+        return createJsonResponse({ message: 'Field plugin deleted successfully.' });
       } catch (error) {
         if (error instanceof APIError) {
           return createErrorResponse(error);

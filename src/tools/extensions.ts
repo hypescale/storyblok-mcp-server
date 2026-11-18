@@ -5,16 +5,16 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import {
-  getManagementHeaders,
-  handleResponse,
   APIError,
+  apiRequest,
+  buildRootUrl,
 } from '../utils/api.js';
 import { createErrorResponse, createJsonResponse } from '../utils/response.js';
 
 // Base URLs for extensions
 const EXTENSION_URLS = {
-  org: 'https://mapi.storyblok.com/v1/org_apps',
-  partner: 'https://mapi.storyblok.com/v1/partner_apps',
+  org: buildRootUrl('/org_apps'),
+  partner: buildRootUrl('/partner_apps'),
 };
 
 export function registerExtensions(server: McpServer): void {
@@ -32,11 +32,7 @@ Args:
     async ({ context }) => {
       try {
         const url = `${EXTENSION_URLS[context]}/`;
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: getManagementHeaders(),
-        });
-        const data = await handleResponse(response, url);
+        const data = await apiRequest('GET', url);
         return createJsonResponse(data);
       } catch (error) {
         if (error instanceof APIError) {
@@ -65,12 +61,8 @@ Args:
         // Note: org uses app.storyblok.com, partner uses mapi.storyblok.com
         const url = context === 'org'
           ? `https://app.storyblok.com/v1/org_apps/${extension_id}`
-          : `https://mapi.storyblok.com/v1/partner_apps/${extension_id}`;
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: getManagementHeaders(),
-        });
-        const data = await handleResponse(response, url);
+          : buildRootUrl(`/partner_apps/${extension_id}`);
+        const data = await apiRequest('GET', url);
         return createJsonResponse(data);
       } catch (error) {
         if (error instanceof APIError) {
@@ -131,12 +123,7 @@ Args:
 
         const payload = { app: appData };
 
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: getManagementHeaders(),
-          body: JSON.stringify(payload),
-        });
-        const data = await handleResponse(response, url);
+        const data = await apiRequest('POST', url, { body: payload });
         return createJsonResponse(data);
       } catch (error) {
         if (error instanceof APIError) {
@@ -195,12 +182,7 @@ Args:
 
         const payload = { app: appData };
 
-        const response = await fetch(url, {
-          method: 'PUT',
-          headers: getManagementHeaders(),
-          body: JSON.stringify(payload),
-        });
-        const data = await handleResponse(response, url);
+        const data = await apiRequest('PUT', url, { body: payload });
         return createJsonResponse(data);
       } catch (error) {
         if (error instanceof APIError) {
@@ -223,26 +205,8 @@ Args:
       try {
         const url = `${EXTENSION_URLS[context]}/${extension_id}`;
 
-        const response = await fetch(url, {
-          method: 'DELETE',
-          headers: getManagementHeaders(),
-        });
-
-        if (response.status === 204) {
-          return {
-            content: [{ type: 'text' as const, text: 'Extension deleted successfully.' }],
-          };
-        } else {
-          return {
-            isError: true,
-            content: [
-              {
-                type: 'text' as const,
-                text: `Failed to delete extension. Status code: ${response.status}`,
-              },
-            ],
-          };
-        }
+        await apiRequest('DELETE', url);
+        return createJsonResponse({ message: 'Extension deleted successfully.' });
       } catch (error) {
         if (error instanceof APIError) {
           return createErrorResponse(error);
@@ -262,12 +226,8 @@ Args:
     },
     async ({ space_id, extension_id }) => {
       try {
-        const url = `https://mapi.storyblok.com/v1/spaces/${space_id}/app_provisions/${extension_id}`;
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: getManagementHeaders(),
-        });
-        const data = await handleResponse(response, url);
+        const url = buildRootUrl(`/spaces/${space_id}/app_provisions/${extension_id}`);
+        const data = await apiRequest('GET', url);
         return createJsonResponse(data);
       } catch (error) {
         if (error instanceof APIError) {
@@ -287,12 +247,8 @@ Args:
     },
     async ({ space_id }) => {
       try {
-        const url = `https://mapi.storyblok.com/v1/spaces/${space_id}/app_provisions/`;
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: getManagementHeaders(),
-        });
-        const data = await handleResponse(response, url);
+        const url = buildRootUrl(`/spaces/${space_id}/app_provisions/`);
+        const data = await apiRequest('GET', url);
         return createJsonResponse(data);
       } catch (error) {
         if (error instanceof APIError) {

@@ -9,9 +9,8 @@ import {
   apiPost,
   apiPut,
   buildManagementUrl,
-  getManagementHeaders,
-  handleResponse,
   APIError,
+  apiRequest,
 } from '../utils/api.js';
 import { createErrorResponse, createJsonResponse } from '../utils/response.js';
 
@@ -319,19 +318,8 @@ Payload:
     async ({ discussion_id, comment_id }) => {
       try {
         const url = buildManagementUrl(`/discussions/${discussion_id}/comments/${comment_id}`);
-        const response = await fetch(url, {
-          method: 'DELETE',
-          headers: getManagementHeaders(),
-        });
-
-        if (response.status === 204) {
-          return {
-            content: [{ type: 'text' as const, text: 'Comment deleted successfully.' }],
-          };
-        }
-
-        const data = await handleResponse(response, url);
-        return createJsonResponse(data);
+        await apiRequest('DELETE', url);
+        return createJsonResponse({ message: 'Comment deleted successfully.' });
       } catch (error) {
         if (error instanceof APIError) {
           return createErrorResponse(error);

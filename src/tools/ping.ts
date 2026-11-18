@@ -4,43 +4,35 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { cfg } from '../config.js';
-import { createErrorResponse } from '../utils/response.js';
+import { apiRequest, buildRootUrl } from '../utils/api.js';
+import { createErrorResponse, createJsonResponse } from '../utils/response.js';
 
 export function registerPing(server: McpServer): void {
   server.tool(
     'ping',
-    'Checks server health and Storyblok API connectivity.',
+    'Checks server health and Storyblok API connectivity by fetching the configured space. Verifies the token, region and space ID in one call.',
     {},
     async () => {
       try {
-        const url = `https://mapi.storyblok.com/?token=${cfg.managementToken}`;
-        const response = await fetch(url);
-
-        if (response.ok) {
-          return {
-            content: [
-              {
-                type: 'text' as const,
-                text: 'Server is running and Storyblok API is reachable.',
-              },
-            ],
-          };
-        } else {
-          const errorBody = await response.text();
-          return {
-            isError: true,
-            errorCode: 'STORYBLOK_API_ERROR',
-            errorMessage: `Storyblok API returned an error. Details: Status: ${response.status} ${response.statusText}, Body: ${errorBody}`,
-            content: [
-              {
-                type: 'text' as const,
-                text: `Error: STORYBLOK_API_ERROR - Storyblok API returned an error. Details: Status: ${response.status} ${response.statusText}, Body: ${errorBody}`,
-              },
-            ],
-          };
-        }
+        // Token goes in the Authorization header (never the query string),
+        // so it cannot leak into proxy or server access logs.
+        const data = await apiRequest<{ space?: { id?: number; name?: string; plan?: string } }>(
+          'GET',
+          buildRootUrl(`/spaces/${cfg.spaceId}`)
+        );
+        return createJsonResponse({
+          status: 'ok',
+          message: 'Server is running and Storyblok API is reachable.',
+          region: cfg.region,
+          api_base_url: cfg.managementBaseUrl,
+          space: {
+            id: data.space?.id,
+            name: data.space?.name,
+            plan: data.space?.plan,
+          },
+        });
       } catch (error) {
-        return createErrorResponse(error);
+        return createErrorResponse(error, 'STORYBLOK_API_ERROR');
       }
     }
   );

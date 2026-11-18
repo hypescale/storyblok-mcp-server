@@ -3,6 +3,7 @@
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { registerModule, registeredModules, totalToolCount } from './registry.js';
 
 // Import all tool registration functions
 import { registerPing } from './ping.js';
@@ -36,108 +37,52 @@ import { registerDiscussions } from './discussions.js';
 import { registerExtensions } from './extensions.js';
 import { registerFieldPlugins } from './field-plugins.js';
 
+type Registrar = (server: McpServer) => void;
+
+/**
+ * Single source of truth for tool modules: [name, description, registrar].
+ * Tool counts are computed at registration time, never hardcoded.
+ */
+const MODULES: Array<[string, string, Registrar]> = [
+  ['ping', 'Server health check', registerPing],
+  ['meta', 'Tool discovery', registerMeta],
+  ['tags', 'Tag management', registerTags],
+  ['internal-tags', 'Internal tag management', registerInternalTags],
+  ['access-tokens', 'Access token management', registerAccessTokens],
+  ['activities', 'Activity tracking', registerActivities],
+  ['approvals', 'Approval workflows', registerApprovals],
+  ['workflows', 'Workflow management', registerWorkflows],
+  ['workflow-stage', 'Workflow stage management', registerWorkflowStages],
+  ['workflow-stage-changes', 'Workflow stage changes', registerWorkflowStageChanges],
+  ['pipelines', 'Branch/pipeline management', registerBranches],
+  ['branch-deployments', 'Branch deployment status', registerBranchDeployments],
+  ['collaborators', 'Collaborator management', registerCollaborators],
+  ['space-roles', 'Space role management', registerSpaceRoles],
+  ['data-sources', 'Datasource management', registerDatasources],
+  ['datasource-entries', 'Datasource entry management', registerDatasourceEntries],
+  ['presets', 'Preset management', registerPresets],
+  ['releases', 'Release management', registerReleases],
+  ['scheduling-stories', 'Story scheduling', registerSchedulingStories],
+  ['tasks', 'Task management', registerTasks],
+  ['space', 'Space management', registerSpace],
+  ['webhooks', 'Webhook management', registerWebhooks],
+  ['components', 'Component management', registerComponents],
+  ['components-folder', 'Component folder management', registerComponentsFolder],
+  ['assets', 'Asset management', registerAssets],
+  ['assets-folder', 'Asset folder management', registerAssetsFolders],
+  ['stories', 'Story CRUD and bulk operations', registerStories],
+  ['discussions', 'Discussion and comment management', registerDiscussions],
+  ['extensions', 'Extension management', registerExtensions],
+  ['field-plugins', 'Field plugin management', registerFieldPlugins],
+];
+
 /**
  * Registers all tools with the MCP server
  */
 export function registerAllTools(server: McpServer): void {
-  // Simple tools
-  registerPing(server);
-  registerMeta(server);
-
-  // Tag management
-  registerTags(server);
-  registerInternalTags(server);
-
-  // Access and authentication
-  registerAccessTokens(server);
-
-  // Activity tracking
-  registerActivities(server);
-
-  // Workflow management
-  registerApprovals(server);
-  registerWorkflows(server);
-  registerWorkflowStages(server);
-  registerWorkflowStageChanges(server);
-
-  // Branch/Pipeline management
-  registerBranches(server);
-  registerBranchDeployments(server);
-
-  // User management
-  registerCollaborators(server);
-  registerSpaceRoles(server);
-
-  // Data sources
-  registerDatasources(server);
-  registerDatasourceEntries(server);
-
-  // Content management
-  registerPresets(server);
-  registerReleases(server);
-  registerSchedulingStories(server);
-  registerTasks(server);
-
-  // Space management
-  registerSpace(server);
-
-  // Webhooks
-  registerWebhooks(server);
-
-  // Components
-  registerComponents(server);
-  registerComponentsFolder(server);
-
-  // Assets
-  registerAssets(server);
-  registerAssetsFolders(server);
-
-  // Stories (most complex)
-  registerStories(server);
-
-  // Discussions
-  registerDiscussions(server);
-
-  // Extensions and plugins
-  registerExtensions(server);
-  registerFieldPlugins(server);
+  for (const [name, description, register] of MODULES) {
+    registerModule(server, name, description, register);
+  }
 }
 
-/**
- * Information about all registered tools
- */
-export const ALL_TOOLS_INFO = {
-  totalTools: 160,
-  modules: [
-    { name: 'ping', tools: 1 },
-    { name: 'meta', tools: 1 },
-    { name: 'tags', tools: 5 },
-    { name: 'internal-tags', tools: 4 },
-    { name: 'access-tokens', tools: 4 },
-    { name: 'activities', tools: 2 },
-    { name: 'approvals', tools: 5 },
-    { name: 'branch-deployments', tools: 1 },
-    { name: 'collaborators', tools: 4 },
-    { name: 'data-sources', tools: 5 },
-    { name: 'datasource-entries', tools: 5 },
-    { name: 'pipelines', tools: 5 },
-    { name: 'presets', tools: 5 },
-    { name: 'releases', tools: 5 },
-    { name: 'scheduling-stories', tools: 5 },
-    { name: 'space', tools: 7 },
-    { name: 'space-roles', tools: 5 },
-    { name: 'tasks', tools: 5 },
-    { name: 'webhooks', tools: 5 },
-    { name: 'workflows', tools: 6 },
-    { name: 'workflow-stage', tools: 5 },
-    { name: 'workflow-stage-changes', tools: 2 },
-    { name: 'components', tools: 9 },
-    { name: 'components-folder', tools: 5 },
-    { name: 'assets', tools: 9 },
-    { name: 'assets-folder', tools: 5 },
-    { name: 'stories', tools: 18 },
-    { name: 'discussions', tools: 10 },
-    { name: 'extensions', tools: 7 },
-    { name: 'field-plugins', tools: 5 },
-  ],
-};
+export { registeredModules, totalToolCount };

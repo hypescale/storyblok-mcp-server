@@ -2,43 +2,43 @@
 /**
  * Storyblok MCP Server - TypeScript Implementation
  *
- * A Model Context Protocol server providing 130 tools for interacting
- * with the Storyblok Management API.
+ * A Model Context Protocol server exposing the Storyblok Management API as tools.
  */
 
+import { createRequire } from 'node:module';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { loadConfig } from './config.js';
-import { registerAllTools, ALL_TOOLS_INFO } from './tools/index.js';
+
+const require = createRequire(import.meta.url);
+const { version } = require('../package.json') as { version: string };
 
 async function main(): Promise<void> {
-  // Load and validate configuration
-  const config = loadConfig();
+  // Loaded dynamically: importing config (directly or via the tools) validates
+  // env vars, and a static import would throw before this handler is in place.
+  const { cfg } = await import('./config.js');
+  const { registerAllTools, registeredModules, totalToolCount } = await import('./tools/index.js');
 
-  // Create MCP server
   const server = new McpServer({
     name: 'storyblok-mcp-server',
-    version: '1.0.0',
+    version,
   });
 
-  // Register all tools
   registerAllTools(server);
 
-  // Create stdio transport
   const transport = new StdioServerTransport();
-
-  // Connect server to transport
   await server.connect(transport);
 
   // Log startup info to stderr (stdout is reserved for MCP protocol)
-  console.error(`Storyblok MCP Server started`);
-  console.error(`Space ID: ${config.spaceId}`);
-  console.error(`Total tools: ${ALL_TOOLS_INFO.totalTools}`);
-  console.error(`Modules: ${ALL_TOOLS_INFO.modules.length}`);
+  console.error(`Storyblok MCP Server v${version} started`);
+  console.error(`Space ID: ${cfg.spaceId} (region: ${cfg.region}, ${cfg.managementBaseUrl})`);
+  console.error(`Total tools: ${totalToolCount()} across ${registeredModules.length} modules`);
 }
 
-// Run the server
-main().catch((error) => {
-  console.error('Fatal error:', error);
+main().catch((error: unknown) => {
+  if (error instanceof Error && error.name === 'ConfigError') {
+    console.error(`Configuration error: ${error.message}`);
+  } else {
+    console.error('Fatal error:', error);
+  }
   process.exit(1);
 });

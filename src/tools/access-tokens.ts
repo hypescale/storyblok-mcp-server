@@ -8,8 +8,8 @@ import {
   apiGet,
   apiPost,
   buildManagementUrl,
-  getManagementHeaders,
   APIError,
+  apiRequest,
 } from '../utils/api.js';
 import { createErrorResponse, createJsonResponse } from '../utils/response.js';
 
@@ -106,27 +106,8 @@ export function registerAccessTokens(server: McpServer): void {
 
         const payload = { api_key: apiKey };
         const url = buildManagementUrl(`/api_keys/${token_id}`);
-        const response = await fetch(url, {
-          method: 'PUT',
-          headers: getManagementHeaders(),
-          body: JSON.stringify(payload),
-        });
-
-        if (response.status === 204) {
-          return {
-            content: [{ type: 'text' as const, text: 'Access Token updated successfully.' }],
-          };
-        } else {
-          return {
-            isError: true,
-            content: [
-              {
-                type: 'text' as const,
-                text: `Failed to update access token. Status code: ${response.status}`,
-              },
-            ],
-          };
-        }
+        await apiRequest('PUT', url, { body: payload });
+        return createJsonResponse({ message: 'Access Token updated successfully.' });
       } catch (error) {
         if (error instanceof APIError) {
           return createErrorResponse(error);
@@ -146,26 +127,8 @@ export function registerAccessTokens(server: McpServer): void {
     async ({ token_id }) => {
       try {
         const url = buildManagementUrl(`/api_keys/${token_id}`);
-        const response = await fetch(url, {
-          method: 'DELETE',
-          headers: getManagementHeaders(),
-        });
-
-        if (response.status === 204) {
-          return {
-            content: [{ type: 'text' as const, text: 'Access Token deleted successfully.' }],
-          };
-        } else {
-          return {
-            isError: true,
-            content: [
-              {
-                type: 'text' as const,
-                text: `Failed to delete Access token. Status code: ${response.status}`,
-              },
-            ],
-          };
-        }
+        await apiRequest('DELETE', url);
+        return createJsonResponse({ message: 'Access Token deleted successfully.' });
       } catch (error) {
         if (error instanceof APIError) {
           return createErrorResponse(error);
