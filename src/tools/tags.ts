@@ -118,7 +118,7 @@ export function registerTags(server: McpServer): void {
     'Adds tags to multiple stories in a Storyblok space.',
     {
       stories: z
-        .array(z.record(z.unknown()))
+        .array(z.record(z.string(), z.unknown()))
         .describe('Array of story objects with tag data'),
     },
     async ({ stories }) => {

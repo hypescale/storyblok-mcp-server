@@ -64,7 +64,7 @@ export function registerTasks(server: McpServer): void {
       webhook_url: z.string().optional().describe('Webhook URL for the task'),
       description: z.string().optional().describe('Description of the task'),
       lambda_code: z.string().optional().describe('Lambda code for the task'),
-      user_dialog: z.record(z.unknown()).optional().describe('User dialog configuration'),
+      user_dialog: z.record(z.string(), z.unknown()).optional().describe('User dialog configuration'),
     },
     async ({ name, task_type, webhook_url, description, lambda_code, user_dialog }) => {
       try {
@@ -100,7 +100,7 @@ export function registerTasks(server: McpServer): void {
       task_type: z.string().optional().default('webhook').describe('Type of task'),
       webhook_url: z.string().optional().describe('New webhook URL'),
       lambda_code: z.string().optional().describe('New lambda code'),
-      user_dialog: z.record(z.unknown()).optional().describe('New user dialog configuration'),
+      user_dialog: z.record(z.string(), z.unknown()).optional().describe('New user dialog configuration'),
     },
     async ({ task_id, name, description, task_type, webhook_url, lambda_code, user_dialog }) => {
       try {

@@ -115,7 +115,7 @@ Required:
       component: z.string().describe('Component/block name this discussion belongs to'),
       lang: z.string().describe('Language code (e.g., "default", "en")'),
       message_json: z
-        .array(z.record(z.unknown()))
+        .array(z.record(z.string(), z.unknown()))
         .describe('Array of message objects [{"type": "text", "text": "...", "attrs": {...}}, ...]'),
     },
     async ({ story_id, title, fieldname, block_uid, component, lang, message_json }) => {
@@ -238,7 +238,7 @@ Required:
     {
       discussion_id: z.number().describe('Numeric ID of the discussion'),
       message_json: z
-        .array(z.record(z.unknown()))
+        .array(z.record(z.string(), z.unknown()))
         .describe('Required array of message objects. Each must include "type", "text", and "attrs"'),
       message: z.string().optional().describe('Optional plain-text field (can be null or string)'),
     },
@@ -279,7 +279,7 @@ Payload:
       discussion_id: z.number().describe('Numeric ID of the discussion'),
       comment_id: z.number().describe('Numeric ID of the comment'),
       message_json: z
-        .array(z.record(z.unknown()))
+        .array(z.record(z.string(), z.unknown()))
         .describe('Required. Array of message objects, each with keys "type", "text", "attrs"'),
       message: z.string().optional().describe('Optional string or null'),
     },

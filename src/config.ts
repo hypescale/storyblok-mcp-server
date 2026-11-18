@@ -1,7 +1,9 @@
 import { config } from 'dotenv';
 
-// Load environment variables from .env file
-config();
+// Load environment variables from .env file.
+// `quiet` is required: dotenv 17 otherwise logs to stdout, which is the MCP
+// protocol channel, and the stray line breaks the client connection.
+config({ quiet: true });
 
 /**
  * Custom exception for configuration errors in Storyblok MCP

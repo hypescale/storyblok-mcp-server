@@ -151,7 +151,7 @@ Args:
       body: z.string().optional().describe('Updated uncompiled JS source'),
       compiled_body: z.string().optional().describe('Updated compiled JS source'),
       name: z.string().optional().describe('Optional new name (must still be unique)'),
-      options: z.record(z.unknown()).optional().describe('Optional config options for the plugin'),
+      options: z.record(z.string(), z.unknown()).optional().describe('Optional config options for the plugin'),
       space_ids: z.array(z.number()).optional().describe('Optional space assignment list'),
       context: z.enum(['space', 'org', 'partner']).default('space').describe("Context: 'space', 'org', or 'partner'"),
     },

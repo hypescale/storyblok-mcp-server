@@ -134,7 +134,7 @@ export function registerAssets(server: McpServer): void {
       title: z.string().optional().describe('Title of the asset'),
       source: z.string().optional().describe('Source information'),
       copyright: z.string().optional().describe('Copyright information'),
-      meta_data: z.record(z.unknown()).optional().describe('Additional metadata'),
+      meta_data: z.record(z.string(), z.unknown()).optional().describe('Additional metadata'),
     },
     async ({
       asset_id,

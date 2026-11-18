@@ -58,7 +58,7 @@ export function registerPresets(server: McpServer): void {
     {
       name: z.string().describe('Name of the preset'),
       component_id: z.number().describe('ID of the component this preset belongs to'),
-      preset: z.record(z.unknown()).describe('Preset data object'),
+      preset: z.record(z.string(), z.unknown()).describe('Preset data object'),
       image: z.string().optional().describe('Image URL for the preset'),
       color: z.string().optional().describe('Color for the preset'),
       icon: z.string().optional().describe('Icon for the preset'),
@@ -96,7 +96,7 @@ export function registerPresets(server: McpServer): void {
       preset_id: z.number().describe('ID of the preset to update'),
       name: z.string().optional().describe('New name for the preset'),
       component_id: z.number().optional().describe('New component ID'),
-      preset: z.record(z.unknown()).optional().describe('New preset data object'),
+      preset: z.record(z.string(), z.unknown()).optional().describe('New preset data object'),
       image: z.string().optional().describe('New image URL'),
       color: z.string().optional().describe('New color'),
       icon: z.string().optional().describe('New icon'),
