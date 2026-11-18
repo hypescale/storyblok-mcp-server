@@ -61,7 +61,7 @@ export function registerDatasources(server: McpServer): void {
       name: z.string().describe('Name of the datasource'),
       slug: z.string().describe('Slug of the datasource'),
       dimensions: z
-        .array(z.record(z.unknown()))
+        .array(z.record(z.string(), z.unknown()))
         .optional()
         .describe('Array of dimension objects'),
     },
@@ -94,7 +94,7 @@ export function registerDatasources(server: McpServer): void {
       name: z.string().optional().describe('New name for the datasource'),
       slug: z.string().optional().describe('New slug for the datasource'),
       dimensions: z
-        .array(z.record(z.unknown()))
+        .array(z.record(z.string(), z.unknown()))
         .optional()
         .describe('Array of dimension objects'),
     },

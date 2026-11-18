@@ -42,7 +42,7 @@ export function registerStories(server: McpServer): void {
       starts_with: z.string().optional().describe('Filter by slug prefix'),
       in_trash: z.boolean().optional().describe('Include trashed stories'),
       search: z.string().optional().describe('Search in name field'),
-      filter_query: z.union([z.string(), z.record(z.unknown())]).optional().describe('Filter query object or JSON string'),
+      filter_query: z.union([z.string(), z.record(z.string(), z.unknown())]).optional().describe('Filter query object or JSON string'),
       in_release: z.number().optional().describe('Filter by release ID'),
       is_published: z.boolean().optional().describe('Filter by published status'),
       by_slugs: z.string().optional().describe('Comma-separated slugs'),
@@ -181,7 +181,7 @@ export function registerStories(server: McpServer): void {
     {
       name: z.string().describe('Name of the story'),
       slug: z.string().describe('URL slug of the story'),
-      content: z.record(z.unknown()).describe('Story content object'),
+      content: z.record(z.string(), z.unknown()).describe('Story content object'),
       parent_id: z.number().optional().describe('Parent folder ID'),
       group_id: z.string().optional().describe('Group ID'),
       sort_by_date: z.string().optional().describe('Sort by date field'),
@@ -189,9 +189,9 @@ export function registerStories(server: McpServer): void {
       default_root: z.string().optional().describe('Default root component'),
       disable_fe_editor: z.boolean().optional().describe('Disable frontend editor'),
       is_startpage: z.boolean().optional().default(false).describe('Whether this is the start page'),
-      meta_data: z.record(z.unknown()).optional().describe('Meta data object'),
+      meta_data: z.record(z.string(), z.unknown()).optional().describe('Meta data object'),
       pinned: z.boolean().optional().describe('Whether the story is pinned'),
-      translated_slugs_attributes: z.array(z.record(z.unknown())).optional().describe('Translated slug attributes'),
+      translated_slugs_attributes: z.array(z.record(z.string(), z.unknown())).optional().describe('Translated slug attributes'),
       position: z.number().optional().describe('Position in list'),
       publish: z.boolean().optional().default(false).describe('Publish immediately after creation'),
       release_id: z.number().optional().describe('Release ID'),
@@ -267,7 +267,7 @@ export function registerStories(server: McpServer): void {
       story_id: z.number().describe('ID of the story to update'),
       name: z.string().optional().describe('New name'),
       slug: z.string().optional().describe('New slug'),
-      content: z.record(z.unknown()).optional().describe('New content'),
+      content: z.record(z.string(), z.unknown()).optional().describe('New content'),
       parent_id: z.number().optional().describe('New parent folder ID'),
       group_id: z.string().optional().describe('New group ID'),
       sort_by_date: z.string().optional().describe('Sort by date field'),
@@ -277,10 +277,10 @@ export function registerStories(server: McpServer): void {
       default_root: z.string().optional().describe('Default root component'),
       disable_fe_editor: z.boolean().optional().describe('Disable frontend editor'),
       is_startpage: z.boolean().optional().describe('Whether this is the start page'),
-      meta_data: z.record(z.unknown()).optional().describe('Meta data object'),
+      meta_data: z.record(z.string(), z.unknown()).optional().describe('Meta data object'),
       pinned: z.boolean().optional().describe('Whether the story is pinned'),
       first_published_at: z.string().optional().describe('First published date'),
-      translated_slugs_attributes: z.array(z.record(z.unknown())).optional().describe('Translated slug attributes'),
+      translated_slugs_attributes: z.array(z.record(z.string(), z.unknown())).optional().describe('Translated slug attributes'),
       position: z.number().optional().describe('Position in list'),
       force_update: z.union([z.boolean(), z.number()]).optional().describe('Force update even if conflicts'),
       release_id: z.number().optional().describe('Release ID'),
@@ -520,7 +520,7 @@ export function registerStories(server: McpServer): void {
     {
       component_name: z.string().describe('Name of the component to validate against'),
       story_id: z.string().optional().describe('ID of the story to fetch and validate'),
-      story_content: z.record(z.unknown()).optional().describe('Story content to validate directly'),
+      story_content: z.record(z.string(), z.unknown()).optional().describe('Story content to validate directly'),
       space_id: z.string().optional().describe('Space ID (currently unused)'),
     },
     async ({ component_name, story_id, story_content, space_id }) => {
@@ -787,7 +787,7 @@ export function registerStories(server: McpServer): void {
             id: z.string().describe('Story ID to update'),
             name: z.string().optional(),
             slug: z.string().optional(),
-            content: z.record(z.unknown()).optional(),
+            content: z.record(z.string(), z.unknown()).optional(),
             publish: z.boolean().optional().describe('Publish after update'),
           }).passthrough()
         )
@@ -847,7 +847,7 @@ export function registerStories(server: McpServer): void {
           z.object({
             name: z.string().describe('Story name'),
             slug: z.string().describe('Story slug'),
-            content: z.record(z.unknown()).describe('Story content'),
+            content: z.record(z.string(), z.unknown()).describe('Story content'),
           }).passthrough()
         )
         .describe('Array of story objects to create'),

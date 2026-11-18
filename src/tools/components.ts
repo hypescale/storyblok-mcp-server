@@ -141,7 +141,7 @@ export function registerComponents(server: McpServer): void {
     {
       name: z.string().describe('Technical name of the component'),
       display_name: z.string().optional().describe('Display name of the component'),
-      schema: z.record(z.unknown()).optional().default({}).describe('Component schema definition'),
+      schema: z.record(z.string(), z.unknown()).optional().default({}).describe('Component schema definition'),
       is_root: z.boolean().optional().default(false).describe('Whether the component can be used as content type'),
       is_nestable: z.boolean().optional().default(true).describe('Whether the component can be nested'),
       preview_field: z.string().optional().describe('Field to use for preview'),
@@ -211,7 +211,7 @@ export function registerComponents(server: McpServer): void {
       id: z.string().describe('ID of the component to update'),
       name: z.string().optional().describe('New technical name'),
       display_name: z.string().optional().describe('New display name'),
-      schema: z.record(z.unknown()).optional().describe('New schema definition'),
+      schema: z.record(z.string(), z.unknown()).optional().describe('New schema definition'),
       image: z.string().optional().describe('Image for the component'),
       preview_field: z.string().optional().describe('Field to use for preview'),
       preview_tmpl: z.string().optional().describe('Preview template'),

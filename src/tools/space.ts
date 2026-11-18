@@ -55,7 +55,7 @@ export function registerSpace(server: McpServer): void {
       domain: z.string().optional().describe('Domain for the space'),
       story_published_hook: z.string().optional().describe('Webhook URL for story published events'),
       environments: z
-        .array(z.record(z.string()))
+        .array(z.record(z.string(), z.string()))
         .optional()
         .describe('Array of environment configurations'),
     },
@@ -96,18 +96,18 @@ export function registerSpace(server: McpServer): void {
       owner_id: z.number().optional().describe('Owner user ID'),
       story_published_hook: z.string().optional().describe('Webhook URL for story published events'),
       environments: z
-        .array(z.record(z.string()))
+        .array(z.record(z.string(), z.string()))
         .optional()
         .describe('Array of environment configurations'),
       parent_id: z.number().optional().describe('Parent space ID'),
       searchblok_id: z.number().optional().describe('Searchblok ID'),
       duplicatable: z.boolean().optional().describe('Whether the space can be duplicated'),
-      billing_address: z.record(z.unknown()).optional().describe('Billing address object'),
+      billing_address: z.record(z.string(), z.unknown()).optional().describe('Billing address object'),
       routes: z.array(z.string()).optional().describe('Array of routes'),
       default_root: z.string().optional().describe('Default root content type'),
       has_pending_tasks: z.boolean().optional().describe('Whether the space has pending tasks'),
       ai_translation_disabled: z.boolean().optional().describe('Whether AI translation is disabled'),
-      options: z.record(z.unknown()).optional().describe('Additional options'),
+      options: z.record(z.string(), z.unknown()).optional().describe('Additional options'),
     },
     async ({
       space_id,
@@ -167,7 +167,7 @@ export function registerSpace(server: McpServer): void {
       domain: z.string().optional().describe('Domain for the new space'),
       story_published_hook: z.string().optional().describe('Webhook URL for story published events'),
       environments: z
-        .array(z.record(z.string()))
+        .array(z.record(z.string(), z.string()))
         .optional()
         .describe('Array of environment configurations'),
       searchblok_id: z.number().optional().describe('Searchblok ID'),
