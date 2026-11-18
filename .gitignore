@@ -1,6 +1,12 @@
 # Dependencies
 node_modules/
 
+# npm is the package manager (package-lock.json); keep other lockfiles out
+pnpm-lock.yaml
+yarn.lock
+bun.lockb
+bun.lock
+
 # Build output
 dist/
 
