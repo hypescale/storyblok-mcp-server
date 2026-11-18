@@ -68,8 +68,8 @@ npm run start
 
 ## Requirements
 
-- Node.js >= 20
-- A Storyblok space with Management + Public/Preview tokens
+- Node.js >= 22
+- A Storyblok space and a personal access token for the Management API
 
 ## Configuration
 
