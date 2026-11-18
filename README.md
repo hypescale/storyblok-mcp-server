@@ -73,21 +73,26 @@ npm run start
 
 ## Configuration
 
-The server requires three environment variables (see `.env.example`):
+The server requires two environment variables (see `.env.example`):
 
 ```env
 STORYBLOK_SPACE_ID=your_space_id
 STORYBLOK_MANAGEMENT_TOKEN=your_management_token
-STORYBLOK_DEFAULT_PUBLIC_TOKEN=your_public_token
+# Optional: set if your space is not hosted in the EU
+STORYBLOK_REGION=eu
 ```
 
 What they are used for:
 
-| Variable | Description |
-|----------|-------------|
-| `STORYBLOK_SPACE_ID` | Your numeric Storyblok space ID |
-| `STORYBLOK_MANAGEMENT_TOKEN` | Management API token with appropriate permissions |
-| `STORYBLOK_DEFAULT_PUBLIC_TOKEN` | Public/Preview token for content delivery |
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `STORYBLOK_SPACE_ID` | yes | Your numeric Storyblok space ID |
+| `STORYBLOK_MANAGEMENT_TOKEN` | yes | Personal access token for the Management API |
+| `STORYBLOK_REGION` | no | Server location of the space: `eu` (default), `us`, `ca`, `ap`, `cn` |
+| `STORYBLOK_API_BASE_URL` | no | Override the API host entirely (e.g. a proxy); takes precedence over `STORYBLOK_REGION` |
+| `STORYBLOK_DEFAULT_PUBLIC_TOKEN` | no | Not used by any tool; accepted for backwards compatibility |
+
+Requests that hit Storyblok's rate limit (HTTP 429; 3–6 req/s depending on plan) are retried automatically with exponential backoff, honoring `Retry-After`.
 
 Tip: Use the smallest permission set possible for safety.
 
@@ -313,6 +318,9 @@ npm run dev
 # Type check
 npm run typecheck
 
+# Run unit tests
+npm test
+
 # Build for production
 npm run build
 ```
@@ -322,14 +330,16 @@ npm run build
 - `src/index.ts` - MCP server entry point
 - `src/tools/*` - Tool modules mapped to Storyblok API areas
 - `src/types/*` - Shared API and Storyblok types
-- `src/utils/*` - HTTP helpers and response formatting
+- `src/tools/registry.ts` - Module registration, tool counts and MCP tool annotations
+- `src/utils/*` - HTTP helpers (retry, region, errors) and response formatting
 - `src/config.ts` - Environment configuration and validation
 
 ## Troubleshooting
 
 - `ConfigError: STORYBLOK_* is missing` - ensure `.env` is present and filled out.
-- `401 Unauthorized` - verify the Management and Public/Preview tokens.
-- `404 Not Found` - double-check the `STORYBLOK_SPACE_ID`.
+- Run the `ping` tool first: it verifies token, region and space ID in one call.
+- `401 Unauthorized` - verify `STORYBLOK_MANAGEMENT_TOKEN`.
+- `404 Not Found` - double-check `STORYBLOK_SPACE_ID`, and that `STORYBLOK_REGION` matches where the space is hosted.
 
 ## Tech Stack
 

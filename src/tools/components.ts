@@ -30,21 +30,12 @@ export async function getComponentSchemaByName(
     // Placeholder for handling alternate tokens or clients per space
   }
 
-  try {
-    const data = await apiGet<{ components: Array<{ name: string; schema?: Record<string, unknown> }> }>('/components');
+  // API errors (auth, rate limit, network) propagate to the caller so they are
+  // not misreported as "component not found".
+  const data = await apiGet<{ components: Array<{ name: string; schema?: Record<string, unknown> }> }>('/components');
 
-    if (data && Array.isArray(data.components)) {
-      for (const component of data.components) {
-        if (component.name === componentName) {
-          return component.schema || null;
-        }
-      }
-    }
-
-    return null;
-  } catch {
-    return null;
-  }
+  const component = data?.components?.find((c) => c.name === componentName);
+  return component?.schema ?? null;
 }
 
 export function registerComponents(server: McpServer): void {
